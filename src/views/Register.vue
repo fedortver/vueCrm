@@ -111,14 +111,10 @@ export default {
         name: this.name
       }
 
-      try{
-        await this.$store.dispatch('register',formData)
-      }
-      catch(e){
-
-      }
-
-      this.$router.push('/')
+      try {
+        await this.$store.dispatch('register', formData)
+        this.$router.push('/')
+      } catch (e) {}
     }
   }
 }

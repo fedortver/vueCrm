@@ -89,14 +89,11 @@ export default {
         email: this.email,
         password: this.password
       }
-      try{
-        console.log(1)
-        await this.$store.dispatch('login', formData)            
+
+      try {
+        await this.$store.dispatch('login', formData)
         this.$router.push('/')
-      }
-      catch(e){
-          console.log(e)
-      }
+      } catch (e) {}
     }
   }
 }
