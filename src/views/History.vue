@@ -5,39 +5,78 @@
     </div>
 
     <div class="history-chart">
-      <canvas></canvas>
+      <canvas ref="canvas"></canvas>
     </div>
-
-    <section>
-      <table>
-        <thead>
-        <tr>
-          <th>#</th>
-          <th>Сумма</th>
-          <th>Дата</th>
-          <th>Категория</th>
-          <th>Тип</th>
-          <th>Открыть</th>
-        </tr>
-        </thead>
-
-        <tbody>
-        <tr>
-          <td>1</td>
-          <td>1212</td>
-          <td>12.12.32</td>
-          <td>name</td>
-          <td>
-            <span class="white-text badge red">Расход</span>
-          </td>
-          <td>
-            <button class="btn-small btn">
-              <i class="material-icons">open_in_new</i>
-            </button>
-          </td>
-        </tr>
-        </tbody>
-      </table>
+    <Loader v-if="loading"/>
+    <p class="center" v-else-if="!records.length">Записей пока нет</p>
+    <section v-else>
+      <HistoryTable :records="items"/>
+      <Paginate
+        v-model="page"
+        :page-count="pageCount"
+        :click-handler="pageChangeHandler"
+        :prev-text="'Назад'"
+        :next-text="'Вперед'"
+        :container-class="'pagination'"
+        :page-class="'waves-effect'"
+      />
     </section>
   </div>
 </template>
+<script>
+import paginationMixin from '@/mixins/pagination.mixin'
+import HistoryTable from '@/components/HistoryTable'
+import {Pie} from 'vue-chartjs'
+export default {
+  name:'history',
+  extends:Pie, 
+  mixins:[paginationMixin],
+  components:{
+    HistoryTable
+  },
+  data:()=>({
+    loading:true,
+    records:[]
+  }),
+  methods:{
+    setup(categories){
+      this.setupPagination(this.records.map(
+      record=>{
+        return{
+           ...record,
+          categoryName:categories.find(c=>c.id===record.categoryId).title,
+          typeClass: record.type==='income'?'green':'red',
+          typeText: record.type==='income'?'Доход':'Расход',
+        }
+       
+      }
+    ))
+
+    this.renderChart({
+      labels: categories.map(c=>c.title),
+      datasets: [
+        {
+          label: 'Расходы по категориям',
+          //backgroundColor: '#f87979',
+          data: categories.map(c=>{
+            return this.records.reduce((total,r)=>{
+              if (r.categoryId===c.id && r.type==='outcome'){
+                total +=+r.amount
+              }
+              return total
+            },0)
+          })
+        }
+      ]
+    })
+    }
+  },
+  async mounted(){
+    this.records = await this.$store.dispatch('fetchRecords')    
+    const categories = await this.$store.dispatch('fetchCategories')
+    this.setup(categories)    
+
+    this.loading=false
+  }
+}
+</script>
